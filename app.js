@@ -1,13 +1,19 @@
-// dotenv
+// Access to variables set in .env file via 'process.env.VARIABLE_NAME'
 require("dotenv").config();
 
 // Server
 const path = require("node:path");
 const express = require("express");
 const app = express();
+// 
+const session = require("express-session");
+const passport = require("passport");
+const pgSession = require("connect-pg-simple")(session);
+const pool = require("./db/pool");
 
 // Import routers
 const indexRouter = require("./routes/indexRouter");
+const userRouter = require("./routes/userRouter");
 
 
 
@@ -18,18 +24,33 @@ app.set("view engine", "ejs");
 // Enable req.body to parse client's output
 app.use(express.urlencoded({ extended: true }));
 
+// Enables express-session to store data 
+app.use(session({
+  store: new pgSession({
+    // Connection to pool
+    pool: pool, 
+    // Instruct connect-pg-simple to create table for Session to store data
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+}));
+app.use(passport.session());
+
 
 
 // Imported routes
-
+app.use("/user", userRouter);
 app.use("/", indexRouter);
 
 
 
 // Handling errors
-app.use((err, req, res, next) => {
-  console.error(err);
-});
+// app.use((err, req, res, next) => {
+//   console.error(err);
+// });
 
 
 
