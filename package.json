@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/smkakitani/odin-clubhouse-members-only#readme",
   "dependencies": {
+    "connect-pg-simple": "^10.0.0",
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
