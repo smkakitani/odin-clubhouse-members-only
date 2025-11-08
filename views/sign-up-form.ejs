@@ -9,19 +9,23 @@
   <h1>Sign-up!</h1>
   <form action="./sign-up" method="post" novalidate>
     <label>First name: 
-      <input type="text" name="firstName" id="firstName" pattern="[a-zA-ZáéíóúàâêôãõüçÁÉÍÓÚÀÂÊÔÃÕÜÇ\\s\\-]{2,32}" maxlength="32" required/>
+      <input type="text" name="firstName" id="firstName" pattern="[a-zA-ZáéíóúàâêôãõüçÁÉÍÓÚÀÂÊÔÃÕÜÇ\s\-]{2,32}" maxlength="32" value="<%= typeof oldInput !== 'undefined' ? oldInput.firstName : '' %>" required/>
     </label>
     <label>Last name: 
-      <input type="text" name="lastName" id="lastName" pattern="[a-zA-ZáéíóúàâêôãõüçÁÉÍÓÚÀÂÊÔÃÕÜÇ\\s\\-]{2,32}" maxlength="32" required/>
+      <input type="text" name="lastName" id="lastName" pattern="[a-zA-ZáéíóúàâêôãõüçÁÉÍÓÚÀÂÊÔÃÕÜÇ\s\-]{2,32}" maxlength="32" value="<%= typeof oldInput !== 'undefined' ? oldInput.lastName : '' %>" required/>
     </label>
     <label>E-mail: 
-      <input type="email" name="email" id="email" maxlength="60" required/>
+      <input type="email" name="email" id="email" maxlength="60" value="<%= typeof oldInput !== 'undefined' ? oldInput.email : '' %>" required/>
     </label>
     <label>Password: 
       <input type="password" name="password" id="password" minlength="6" required/>
     </label>
+    <label>Confirm password: 
+      <input type="password" name="passwordConfirmation" id="passwordConfirmation" minlength="6" required/>
+    </label>
     <button type="submit">submit</button>
   </form>
+  <%- include("errors.ejs") %>
   <a href="/">back</a>
   
 </body>
