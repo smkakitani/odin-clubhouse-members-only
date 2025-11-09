@@ -8,6 +8,7 @@ const app = express();
 // 
 const session = require("express-session");
 const passport = require("passport");
+// const LocalStrategy = require('passport-local').Strategy;
 const pgSession = require("connect-pg-simple")(session);
 const pool = require("./db/pool");
 
@@ -39,6 +40,14 @@ app.use(session({
 }));
 app.use(passport.session());
 
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
+  console.log(res.locals);
+  next();
+});
+
+
+
 
 
 // Imported routes
@@ -48,9 +57,9 @@ app.use("/", indexRouter);
 
 
 // Handling errors
-// app.use((err, req, res, next) => {
-//   console.error(err);
-// });
+app.use((err, req, res, next) => {
+  console.error(err);
+});
 
 
 

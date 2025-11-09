@@ -5,15 +5,18 @@ const { body, validationResult, matchedData } = require("express-validator");
 const passport = require("passport");
 const LocalStrategy = require('passport-local').Strategy;
 
+// Hash password
+const bcrypt = require("bcryptjs");
+
 
 
 // Validation
 const alphaErr = 'must only contain letters or "-".';
 const lengthErr = "must be between 2 and 32 characters.";
 const isSamePassword = async (value, { req }) => {
-  console.log(value, value === req.body.password/* , req.body */)
+  // console.log(value, value === req.body.password/* , req.body */)
   if (value !== req.body.password) {
-    console.log(value);
+    // console.log(value);
     throw new Error('a');
     // return false;
   }
@@ -40,14 +43,15 @@ const validateUser = [
 
 // Passport - LocalStrategy
 passport.use(
-  new LocalStrategy(async (firstName, lastName, email, password) => {
+  new LocalStrategy(async (/* firstName, lastName,  */email, password) => {
     try {
       const user = await db.getUserByEmail(email);
+      const match = await bcrypt.compare(password, user.password);
 
       if (!user) {
         return done(null, false, { message: "Incorrect username" });
       }
-      if (user.password !== password) {
+      if (!match) {
         return done(null, false, { message: "Incorrect password" });
       }
 
@@ -98,24 +102,54 @@ const userSignUpPost = [
 
     next();
   },
-  async (req, res, next) => {
-    const { firstName, lastName, email, password } = req.params;
+  async (req, res, next) => {    
     try {
+      // const { firstName, lastName, email, password } = req.params;
+      const { firstName, lastName, email, password } = matchedData(req);
+
+      // console.log("password from POST: ", password)
+      const hashedPassword = await bcrypt.hash(password, 10);
+      // console.log(hashedPassword);
+
       await db.addUser({ firstName, lastName, email, password });
 
       res.redirect("/");
     } catch (err) {
+      console.error(err);
       return next(err);
     }
-
-    // res.send("user sending data to DB...");
   }
 ];
+
+async function userLogInGet(req, res) {
+  res.render("log-in", {
+    title: "Log in",
+  });
+}
+
+async function userLogInPost(req, res) {
+  console.log("authenticating...")
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "/"
+  })
+}
+
+async function userLogOutGet(req, res, next) {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
+}
 
 
 
 module.exports = {
   userSignUpGet,
   userSignUpPost,
-
+  userLogInGet,
+  userLogInPost,
+  userLogOutGet,
 };
