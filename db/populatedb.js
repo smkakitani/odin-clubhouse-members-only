@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 const { argv } = require("node:process");
-// require("dotenv").config();
+require("dotenv").config();
 const { Client } = require("pg");
 
 
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   firstName VARCHAR ( 255 ),
   lastName VARCHAR ( 255 ),
   email VARCHAR ( 255 ),
-  password VARCHAR ( 255 ),
+  password VARCHAR ( 255 ) NOT NULL,
   isMembership BOOLEAN DEFAULT FALSE,
   isAdmin BOOLEAN DEFAULT FALSE,
   signInDate DATE DEFAULT CURRENT_DATE
@@ -35,7 +35,7 @@ async function main() {
 
   try {
     const client = new Client({
-    connectionString: process.argv[2] || process.env.CONNECTION_STRING_LOCAL_DB,
+    connectionString: process.argv[2] || process.env.CONNECTION_LOCAL_DB,
   });
     await client.connect();
     await client.query(SQL);
