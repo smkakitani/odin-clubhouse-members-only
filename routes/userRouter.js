@@ -16,32 +16,9 @@ userRouter
   .route("/log-in")
   .get(userController.userLogInGet)
   .post(userController.userLogInPost);
-  // .post((req, res, next) => {
-  //   passport.authenticate("local", {
-  //     successRedirect: "/",
-  //     failureRedirect: "/",
-  //     successMessage: "success!!!",
-  //     failureMessage: "fail authenticating",
-  //   })
-  // })
-// userRouter.get("/", userController.userLogOutGet);
 
-userRouter.get("/log-out", (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    res.redirect("/");
-  });
-});
-
-
-// userRouter.post("/log-in", 
-//   passport.authenticate("local", {
-//     successRedirect: "/",
-//     failureRedirect: "/"
-//   })
-// );
+// Router for logging
+userRouter.get("/log-out", userController.userLogOutGet);
 
 
 

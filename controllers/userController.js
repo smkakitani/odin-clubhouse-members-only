@@ -15,11 +15,9 @@ const db = require("../db/queries");
 const alphaErr = 'must only contain letters or "-".';
 const lengthErr = "must be between 2 and 32 characters.";
 const isSamePassword = async (value, { req }) => {
-  // console.log(value, value === req.body.password/* , req.body */)
   if (value !== req.body.password) {
     // console.log(value);
     throw new Error('a');
-    // return false;
   }
   return true;
 };
@@ -40,25 +38,24 @@ const validateUser = [
     .custom(isSamePassword).withMessage("Must be same as password."),
 ];
 
-// Passport - LocalStrategy
+// Passport - LocalStrategy setup
+// Passport search for 'username' and 'password' as default, but it can take options so we can tell which field names to look for
 const customFields = {
   usernameField: 'email',
 };
 
 passport.use(
-  new LocalStrategy(async (username, password, done) => {
-    // console.log('calling from LocalStrat', password);
+  new LocalStrategy(customFields, async (username, password, done) => {
     try {
       const user = await db.getUserByEmail(username);
-      // console.log(password, user);      
 
       if (!user) {
-        // user probably returning 'undefined'
+        // User returns 'undefined'
         console.log("username do not match!!!");
         return done(null, false, { message: "Incorrect username" });
       }
 
-      // Compare hashed password from bcryptjs
+      // Verify hashed password from bcryptjs
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
         console.log("passwords do not match!!!");
@@ -72,15 +69,14 @@ passport.use(
   })
 );
 
+// To make sure user is logged in and to allow them to stay logged in
 passport.serializeUser((user, done) => {
-  // console.log("calling from serializeUser!!!");
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await db.getUserById(id);
-    // console.log("calling from deserializeUser: ", user.id);
 
     done(null, user);
   } catch (err) {
@@ -117,10 +113,8 @@ const userSignUpPost = [
   },
   async (req, res, next) => {    
     try {
-      // const { firstName, lastName, email, password } = req.params;
       const { firstName, lastName, email, password } = matchedData(req);
 
-      // console.log("password from POST: ", password, typeof password);
       const hashedPassword = await bcrypt.hash(password, 10);
       // console.log(hashedPassword, typeof hashedPassword);
 
@@ -142,24 +136,17 @@ async function userLogInGet(req, res) {
 
 async function userLogInPost(req, res, next) {
   console.log("authenticating...", req.body);
-  // passport.authenticate("local", (err, user, info, status) => {
-  //   if (err) {
-  //     console.error(err);
-  //     return next(err);
-  //   }
-  //   console.log('User: ', user, 'Info: ', info, 'Status: ', status);
-  //   res.redirect('/');
-  // })
+
+  // Function must return passport.authenticate
   return passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "./log-in",
-    // successMessage: "success!!!",
-    failureMessage: true,
+    // failureMessage: true,
   })(req, res, next);
 }
 
 async function userLogOutGet(req, res, next) {
-  console.log('should log out ;-;', req);
+  console.log('...logging out');
   return req.logout((err) => {
     if (err) {
       console.error(err);

@@ -8,11 +8,13 @@
 <body>
   <h1><%= title %></h1>
   <div>Board</div>
-  <a href="/user/sign-up">Sign-up</a>
-  <a href="/user/log-in">Log-in</a>
+  
   <% if (locals.user) { %>
-    <h2>Welcome back, <%= user.email %></h2>
-    <a href="/log-out">Log out</a>
+    <h2>Welcome back, <%= user.firstname %></h2>
+    <a href="user/log-out">Log out</a>
+  <% } else { %>
+    <a href="/user/log-in">Log-in</a> or
+    <a href="/user/sign-up">Sign-up</a>
   <% } %>
 </body>
 </html>
