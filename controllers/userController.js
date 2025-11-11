@@ -1,4 +1,4 @@
-const db = require("../db/queries");
+
 const { body, validationResult, matchedData } = require("express-validator");
 
 // Passport
@@ -7,6 +7,7 @@ const LocalStrategy = require('passport-local').Strategy;
 
 // Hash password
 const bcrypt = require("bcryptjs");
+const db = require("../db/queries");
 
 
 
@@ -39,19 +40,28 @@ const validateUser = [
     .custom(isSamePassword).withMessage("Must be same as password."),
 ];
 
-
-
 // Passport - LocalStrategy
+const customFields = {
+  usernameField: 'email',
+};
+
 passport.use(
-  new LocalStrategy(async (/* firstName, lastName,  */email, password) => {
+  new LocalStrategy(async (username, password, done) => {
+    // console.log('calling from LocalStrat', password);
     try {
-      const user = await db.getUserByEmail(email);
-      const match = await bcrypt.compare(password, user.password);
+      const user = await db.getUserByEmail(username);
+      // console.log(password, user);      
 
       if (!user) {
+        // user probably returning 'undefined'
+        console.log("username do not match!!!");
         return done(null, false, { message: "Incorrect username" });
       }
+
+      // Compare hashed password from bcryptjs
+      const match = await bcrypt.compare(password, user.password);
       if (!match) {
+        console.log("passwords do not match!!!");
         return done(null, false, { message: "Incorrect password" });
       }
 
@@ -63,15 +73,18 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
+  // console.log("calling from serializeUser!!!");
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await db.getUserById(id);
+    // console.log("calling from deserializeUser: ", user.id);
 
     done(null, user);
   } catch (err) {
+    console.error(err);
     done(err);
   }
 });
@@ -107,11 +120,11 @@ const userSignUpPost = [
       // const { firstName, lastName, email, password } = req.params;
       const { firstName, lastName, email, password } = matchedData(req);
 
-      // console.log("password from POST: ", password)
+      // console.log("password from POST: ", password, typeof password);
       const hashedPassword = await bcrypt.hash(password, 10);
-      // console.log(hashedPassword);
+      // console.log(hashedPassword, typeof hashedPassword);
 
-      await db.addUser({ firstName, lastName, email, password });
+      await db.addUser({ firstName, lastName, email, password: hashedPassword });
 
       res.redirect("/");
     } catch (err) {
@@ -127,17 +140,29 @@ async function userLogInGet(req, res) {
   });
 }
 
-async function userLogInPost(req, res) {
-  console.log("authenticating...")
-  passport.authenticate("local", {
+async function userLogInPost(req, res, next) {
+  console.log("authenticating...", req.body);
+  // passport.authenticate("local", (err, user, info, status) => {
+  //   if (err) {
+  //     console.error(err);
+  //     return next(err);
+  //   }
+  //   console.log('User: ', user, 'Info: ', info, 'Status: ', status);
+  //   res.redirect('/');
+  // })
+  return passport.authenticate("local", {
     successRedirect: "/",
-    failureRedirect: "/"
-  })
+    failureRedirect: "./log-in",
+    // successMessage: "success!!!",
+    failureMessage: true,
+  })(req, res, next);
 }
 
 async function userLogOutGet(req, res, next) {
-  req.logout((err) => {
+  console.log('should log out ;-;', req);
+  return req.logout((err) => {
     if (err) {
+      console.error(err);
       return next(err);
     }
     res.redirect("/");
