@@ -20,6 +20,12 @@ userRouter
 // Router for logging
 userRouter.get("/log-out", userController.userLogOutGet);
 
+// Router for joining the club with a secret passcode
+userRouter
+  .route("/join-club")
+  .get(userController.userJoinClubGet)
+  .post(userController.userJoinClubPost);
+
 
 
 module.exports = userRouter;

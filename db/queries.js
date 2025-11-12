@@ -32,6 +32,16 @@ async function addUser({ firstName, lastName, email, password }) {
   }  
 }
 
+async function changeMembership(userId) {
+  try {
+    await pool.query("UPDATE users SET ismembership = TRUE WHERE id = $1", [userId]);
+    console.log(`Changing membership of User ID: ${userId}`);
+
+  } catch (err) {
+    console.error('Query changeMembership error: ', err);
+  }
+}
+
 
 
 // Message's queries
@@ -52,6 +62,7 @@ module.exports = {
   getUserById,
   getUserByEmail,
   addUser,
+  changeMembership,
   // 
   addMessage,
 };

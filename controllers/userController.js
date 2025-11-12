@@ -1,4 +1,5 @@
 
+// Express validation
 const { body, validationResult, matchedData } = require("express-validator");
 
 // Passport
@@ -12,6 +13,7 @@ const db = require("../db/queries");
 
 
 // Validation
+const secretPasscode = "WORSHIPCATS";
 const alphaErr = 'must only contain letters or "-".';
 const lengthErr = "must be between 2 and 32 characters.";
 const isSamePassword = async (value, { req }) => {
@@ -35,7 +37,15 @@ const validateUser = [
   body("password")
     .isLength({ min: 6 }).withMessage("Password must have 6 characters at minimum."),
   body("passwordConfirmation")
-    .custom(isSamePassword).withMessage("Must be same as password."),
+    .custom(isSamePassword).withMessage("Must be same as password."),  
+];
+
+const validatePasscode = [
+  body("passcode").trim().toUpperCase()
+    .notEmpty().withMessage("Missing secret passcode.")
+    .isAlpha().withMessage("Our secret passcode contain only letters!")
+    .contains('cat', { ignoreCase: true }).withMessage("Our secret passcode contains 'cat'!")
+    .equals(secretPasscode).withMessage("Incorrect passcode."),
 ];
 
 // Passport - LocalStrategy setup
@@ -89,7 +99,7 @@ passport.deserializeUser(async (id, done) => {
 
 // 
 function userSignUpGet(req, res) {
-  res.render("sign-up-form", {
+  res.render("user/sign-up-form", {
     title: "Sign-up",
   });
 }
@@ -102,7 +112,7 @@ const userSignUpPost = [
     // console.log(errors);
 
     if(!errors.isEmpty()) {
-      return res.status(400).render("sign-up-form", {
+      return res.status(400).render("user/sign-up-form", {
         title: "Sign-up",
         oldInput: { firstName, lastName, email },
         errors: errors.array(),
@@ -110,8 +120,7 @@ const userSignUpPost = [
     }
 
     next();
-  },
-  async (req, res, next) => {    
+  }, async (req, res, next) => {    
     try {
       const { firstName, lastName, email, password } = matchedData(req);
 
@@ -133,7 +142,7 @@ async function userLogInGet(req, res) {
   const errorMsg = req.session.messages;
   req.session.messages = [];
 
-  res.render("log-in", {
+  res.render("user/log-in", {
     title: "Log in",
     error: errorMsg,
   });
@@ -172,7 +181,7 @@ async function userLogInGet(req, res) {
   }
 ]; */
 
-const userLogInPost = [
+/* const userLogInPost = [
   (req, res, next) => {
     // console.log('from login post: ',req.session);
 
@@ -184,18 +193,18 @@ const userLogInPost = [
     failureMessage: true,
     })(req, res, next);
   }
-];
+]; */
 
-// async function userLogInPost(req, res, next) {
-//   console.log("authenticating...", req.body);
+async function userLogInPost(req, res, next) {
+  console.log("authenticating...", req.body);
 
-//   // Function must return passport.authenticate
-//   return passport.authenticate("local", {
-//     successRedirect: "/",
-//     failureRedirect: "./log-in",
-//     failureMessage: true,
-//   })(req, res, next);
-// }
+  // Function must return passport.authenticate
+  return passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "./log-in",
+    failureMessage: true,
+  })(req, res, next);
+}
 
 async function userLogOutGet(req, res, next) {
   console.log('...logging out');
@@ -208,12 +217,65 @@ async function userLogOutGet(req, res, next) {
   });
 }
 
+function userJoinClubGet(req, res, next) {
+  res.render("user/join-club", {
+    title: "Join the club",
+
+  });
+}
+
+const userJoinClubPost = [
+  validatePasscode,
+  async (req, res, next) => {
+    try {
+      console.log('body: ', req.body);
+      const errors = validationResult(req);
+      // console.log(req);
+
+      if(!errors.isEmpty()) {
+        return res.status(400).render("user/join-club", {
+          title: "Join the club",
+          errors: errors.array({ onlyFirstError: true }),
+        });
+      }
+
+      
+
+      next();
+    } catch (err) {
+      return next(err);
+    }
+  }, async (req, res, next) => {
+    try {
+      const { passcode } = matchedData(req);
+      const userId = req.user.id;
+      // console.log("User ID: ", userId);
+
+      if (passcode.toUpperCase() === secretPasscode) {
+        console.log('user should be a new member of the club!!!');
+
+        await db.changeMembership(userId);
+
+        res.redirect("/");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    
+  }
+];
+
+
 
 
 module.exports = {
   userSignUpGet,
   userSignUpPost,
+  //////
   userLogInGet,
   userLogInPost,
   userLogOutGet,
+  //////
+  userJoinClubGet,
+  userJoinClubPost,
 };

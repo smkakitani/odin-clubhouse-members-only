@@ -11,10 +11,14 @@
   
   <% if (locals.user) { %>
     <h2>Welcome back, <%= user.firstname %></h2>
+    <div>
+      <p>Do you want to join our <a href="user/join-club">special club</a>?</p>
+      
+    </div>
     <a href="user/log-out">Log out</a>
   <% } else { %>
-    <a href="/user/log-in">Log-in</a> or
-    <a href="/user/sign-up">Sign-up</a>
+    <a href="user/log-in">Log-in</a> or
+    <a href="user/sign-up">Sign-up</a>
   <% } %>
 </body>
 </html>
