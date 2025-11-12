@@ -7,6 +7,12 @@
 </head>
 <body>
   <form action="./log-in" method="POST">
+    <%# include("errors") %>
+    <% console.log('from view: ', error); %>
+    <% if (locals.error) { %>
+      <% console.log(error); %>
+      <p><%= error[0] %></p>
+    <% } %>
     <label>User e-mail: 
       <input type="email" name="email" id="email" placeholder="Enter your e-mail" />
     </label>

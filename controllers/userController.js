@@ -129,21 +129,73 @@ const userSignUpPost = [
 ];
 
 async function userLogInGet(req, res) {
+  // console.log('from login GET: ',req.session)
+  const errorMsg = req.session.messages;
+  req.session.messages = [];
+
   res.render("log-in", {
     title: "Log in",
+    error: errorMsg,
   });
 }
 
-async function userLogInPost(req, res, next) {
-  console.log("authenticating...", req.body);
+/* const userLogInPost = [
+  async (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) { return next(err) }
+      if (!user) {
+        console.log('Froom authenticate: ', info);
+        // return res.redirect("./log-in");
+        return res.render("log-in", {
+          title: "Log in",
+          errors: info.message,
+        });
+      }
+      req.logIn(user, (err) => {
+        if (err) { return next(err) }
+      })
+      return res.redirect("/");
+    })(req, res, next);
+  },
+  
+  async (req, res, next) => {
+    // const errors = req.hasMessages ? req.message : ;
+    const errors = req.message;
+    console.log(errors);
 
-  // Function must return passport.authenticate
-  return passport.authenticate("local", {
+    if (errors.length >= 1) {
+      return res.status(400).render("log-in", {
+        title: "Log in",
+        errors: errors,
+      });
+    }
+  }
+]; */
+
+const userLogInPost = [
+  (req, res, next) => {
+    // console.log('from login post: ',req.session);
+
+    next();
+  }, async (req, res, next) => {
+    return passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "./log-in",
-    // failureMessage: true,
-  })(req, res, next);
-}
+    failureMessage: true,
+    })(req, res, next);
+  }
+];
+
+// async function userLogInPost(req, res, next) {
+//   console.log("authenticating...", req.body);
+
+//   // Function must return passport.authenticate
+//   return passport.authenticate("local", {
+//     successRedirect: "/",
+//     failureRedirect: "./log-in",
+//     failureMessage: true,
+//   })(req, res, next);
+// }
 
 async function userLogOutGet(req, res, next) {
   console.log('...logging out');

@@ -39,12 +39,20 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 app.use(passport.session());
-
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   // console.log(res.locals);
   next();
 });
+/* app.use((req, res, next) => {
+  const msg = req.session.messages || [];
+  console.log('from app.js: ', msg);
+  res.locals.messages = msg;
+  res.locals.hasMessages = !! msg.length;
+  req.session.messages = [];
+
+  next();
+}); */
 
 
 
