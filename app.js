@@ -5,6 +5,7 @@ require("dotenv").config();
 const path = require("node:path");
 const express = require("express");
 const app = express();
+const assetsPath = path.join(__dirname, "public");
 
 // Authentication
 const session = require("express-session");
@@ -17,11 +18,16 @@ const indexRouter = require("./routes/indexRouter");
 const userRouter = require("./routes/userRouter");
 const messagesRouter = require("./routes/messagesRouter");
 
+// require("./public/styles/index.css");
+
 
 
 // Enables EJS for views
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
+
+// CSS
+app.use(express.static(assetsPath));
 
 // Enable req.body to parse client's output
 app.use(express.urlencoded({ extended: true }));
