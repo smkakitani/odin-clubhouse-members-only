@@ -1,4 +1,3 @@
-
 // Express validation
 const { body, validationResult, matchedData } = require("express-validator");
 
@@ -14,11 +13,11 @@ const db = require("../db/queries");
 
 // Validation
 const secretPasscode = "WORSHIPCATS";
+const secretPasscodeAdmin = "WORSHIPCATSADMIN";
 const alphaErr = 'must only contain letters or "-".';
 const lengthErr = "must be between 2 and 32 characters.";
 const isSamePassword = async (value, { req }) => {
   if (value !== req.body.password) {
-    // console.log(value);
     throw new Error('a');
   }
   return true;
@@ -45,7 +44,8 @@ const validatePasscode = [
     .notEmpty().withMessage("Missing secret passcode.")
     .isAlpha().withMessage("Our secret passcode contain only letters!")
     .contains('cat', { ignoreCase: true }).withMessage("Our secret passcode contains 'cat'!")
-    .equals(secretPasscode).withMessage("Incorrect passcode."),
+    // .equals(secretPasscode).withMessage("Incorrect passcode."),
+    .matches(/^WORSHIPCATS(?:admin)?$/i).withMessage("Incorrect passcode."),
 ];
 
 // Passport - LocalStrategy setup
@@ -61,14 +61,12 @@ passport.use(
 
       if (!user) {
         // User returns 'undefined'
-        console.log("username do not match!!!");
         return done(null, false, { message: "Incorrect username" });
       }
 
       // Verify hashed password from bcryptjs
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
-        console.log("passwords do not match!!!");
         return done(null, false, { message: "Incorrect password" });
       }
 
@@ -107,9 +105,8 @@ function userSignUpGet(req, res) {
 const userSignUpPost = [
   validateUser,
   async (req, res, next) => {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email } = req.body; // To keep old input value
     const errors = validationResult(req);
-    // console.log(errors);
 
     if(!errors.isEmpty()) {
       return res.status(400).render("user/sign-up-form", {
@@ -123,9 +120,7 @@ const userSignUpPost = [
   }, async (req, res, next) => {    
     try {
       const { firstName, lastName, email, password } = matchedData(req);
-
       const hashedPassword = await bcrypt.hash(password, 10);
-      // console.log(hashedPassword, typeof hashedPassword);
 
       await db.addUser({ firstName, lastName, email, password: hashedPassword });
 
@@ -138,7 +133,6 @@ const userSignUpPost = [
 ];
 
 async function userLogInGet(req, res) {
-  // console.log('from login GET: ',req.session)
   const errorMsg = req.session.messages;
   req.session.messages = [];
 
@@ -148,56 +142,7 @@ async function userLogInGet(req, res) {
   });
 }
 
-/* const userLogInPost = [
-  async (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (err) { return next(err) }
-      if (!user) {
-        console.log('Froom authenticate: ', info);
-        // return res.redirect("./log-in");
-        return res.render("log-in", {
-          title: "Log in",
-          errors: info.message,
-        });
-      }
-      req.logIn(user, (err) => {
-        if (err) { return next(err) }
-      })
-      return res.redirect("/");
-    })(req, res, next);
-  },
-  
-  async (req, res, next) => {
-    // const errors = req.hasMessages ? req.message : ;
-    const errors = req.message;
-    console.log(errors);
-
-    if (errors.length >= 1) {
-      return res.status(400).render("log-in", {
-        title: "Log in",
-        errors: errors,
-      });
-    }
-  }
-]; */
-
-/* const userLogInPost = [
-  (req, res, next) => {
-    // console.log('from login post: ',req.session);
-
-    next();
-  }, async (req, res, next) => {
-    return passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "./log-in",
-    failureMessage: true,
-    })(req, res, next);
-  }
-]; */
-
 async function userLogInPost(req, res, next) {
-  console.log("authenticating...", req.body);
-
   // Function must return passport.authenticate
   return passport.authenticate("local", {
     successRedirect: "/",
@@ -207,7 +152,6 @@ async function userLogInPost(req, res, next) {
 }
 
 async function userLogOutGet(req, res, next) {
-  console.log('...logging out');
   return req.logout((err) => {
     if (err) {
       console.error(err);
@@ -220,7 +164,6 @@ async function userLogOutGet(req, res, next) {
 function userJoinClubGet(req, res, next) {
   res.render("user/join-club", {
     title: "Join the club",
-
   });
 }
 
@@ -228,18 +171,14 @@ const userJoinClubPost = [
   validatePasscode,
   async (req, res, next) => {
     try {
-      console.log('body: ', req.body);
       const errors = validationResult(req);
-      // console.log(req);
 
       if(!errors.isEmpty()) {
         return res.status(400).render("user/join-club", {
           title: "Join the club",
           errors: errors.array({ onlyFirstError: true }),
         });
-      }
-
-      
+      }      
 
       next();
     } catch (err) {
@@ -249,22 +188,22 @@ const userJoinClubPost = [
     try {
       const { passcode } = matchedData(req);
       const userId = req.user.id;
-      // console.log("User ID: ", userId);
 
       if (passcode.toUpperCase() === secretPasscode) {
-        console.log('user should be a new member of the club!!!');
+        await db.updateMembership(userId);
 
-        await db.changeMembership(userId);
+        res.redirect("/");
+      }
+      if (passcode.toUpperCase() === secretPasscodeAdmin) {
+        await db.updateAdmin(userId);
 
         res.redirect("/");
       }
     } catch (err) {
       console.error(err);
-    }
-    
+    }    
   }
 ];
-
 
 
 
