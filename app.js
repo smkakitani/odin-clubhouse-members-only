@@ -5,16 +5,17 @@ require("dotenv").config();
 const path = require("node:path");
 const express = require("express");
 const app = express();
-// 
+
+// Authentication
 const session = require("express-session");
 const passport = require("passport");
-// const LocalStrategy = require('passport-local').Strategy;
 const pgSession = require("connect-pg-simple")(session);
 const pool = require("./db/pool");
 
 // Import routers
 const indexRouter = require("./routes/indexRouter");
 const userRouter = require("./routes/userRouter");
+const messagesRouter = require("./routes/messagesRouter");
 
 
 
@@ -39,27 +40,19 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 app.use(passport.session());
+
+
+
+// Custom middleware to access current user from deserializeUser function
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
-  // console.log(res.locals);
+
   next();
 });
-/* app.use((req, res, next) => {
-  const msg = req.session.messages || [];
-  console.log('from app.js: ', msg);
-  res.locals.messages = msg;
-  res.locals.hasMessages = !! msg.length;
-  req.session.messages = [];
-
-  next();
-}); */
-
-
-
-
 
 // Imported routes
 app.use("/user", userRouter);
+app.use("/messages", messagesRouter)
 app.use("/", indexRouter);
 
 

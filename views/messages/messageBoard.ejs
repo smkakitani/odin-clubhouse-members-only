@@ -1,0 +1,19 @@
+<% if (locals.messages) { %>
+  <ul>
+    <% messages.forEach(function(message) { %>
+      <%# console.log(message) %>
+      <li>From: <%- locals.user?.ismembership ?  message.user_name : `&#128274;` %>
+        <p><%= message.title %></p>
+        <p><%= message.text %></p>
+        <% if (locals.user?.ismembership) { %>
+          <p><%= message.timestamp %></p>
+        <% } %>
+        <% if (locals.user?.isadmin) { %>
+          <form action="messages/<%= message.id %>/delete" method="POST">
+            <button type="submit" onclick="return confirm('Are you sure you want to delete this message?');">delete message</button>
+          </form>          
+        <% } %>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>

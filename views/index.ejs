@@ -7,12 +7,16 @@
 </head>
 <body>
   <h1><%= title %></h1>
-  <div>Board</div>
+  <div>Board
+    <%- include("messages/messageBoard", { user: user }) %>
+  </div>
   
   <% if (locals.user) { %>
     <h2>Welcome back, <%= user.firstname %></h2>
     <div>
       <p>Do you want to join our <a href="user/join-club">special club</a>?</p>
+      
+      <a href="messages/new">Create a new message!</a>
       
     </div>
     <a href="user/log-out">Log out</a>
